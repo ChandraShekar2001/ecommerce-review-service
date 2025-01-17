@@ -61,7 +61,7 @@ const routesMiddleware = (app: Application): void => {
 };
 
 const startQueues = async (): Promise<void> => {
-  reviewChannel = await createConnection() as Channel;
+  reviewChannel = (await createConnection()) as Channel;
 };
 
 const startElasticSearch = (): void => {
@@ -70,7 +70,7 @@ const startElasticSearch = (): void => {
 
 const reviewErrorHandler = (app: Application): void => {
   app.use((error: IErrorResponse, _req: Request, res: Response, next: NextFunction) => {
-    log.log('error', `ReviewService :`, error);
+    log.log('error', 'ReviewService :', error);
     if (error instanceof CustomError) {
       res.status(error.statusCode).json(error.serializeErrors());
     }
