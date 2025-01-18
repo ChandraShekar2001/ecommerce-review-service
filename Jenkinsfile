@@ -1,10 +1,10 @@
 namespace = "production"
-serviceName = "ecommerce-review"
+serviceName = "ecom-review"
 service = "ecommerce Reviews"
 
-// def groovyMethods
+def groovyMethods
 
-// m1 = System.currentTimeMillis()
+m1 = System.currentTimeMillis()
 
 pipeline {
   agent {
@@ -31,14 +31,14 @@ pipeline {
 
     stage("Prepare Environment") {
       steps {
-        // sh "[ -d pipeline ] || mkdir pipeline"
-        // dir("pipeline") {
-        //   // Add your jenkins automation url to url field
-        //   git branch: 'main', credentialsId: 'github', url: ''
-        //   script {
-        //     groovyMethods = load("functions.groovy")
-        //   }
-        // }
+        sh "[ -d pipeline ] || mkdir pipeline"
+        dir("pipeline") {
+          // Add your jenkins automation url to url field
+          git branch: 'main', credentialsId: 'github', url: 'https://github.com/ChandraShekar2001/jenkins-automation'
+          script {
+            groovyMethods = load("functions.groovy")
+          }
+        }
         // Add your chat review url to url field
         git branch: 'main', credentialsId: 'github', url: 'https://github.com/ChandraShekar2001/ecommerce-review-service'
         withCredentials([string(credentialsId: 'npm-token', variable: 'NPM_TOKEN')]) {
@@ -82,81 +82,20 @@ pipeline {
         sh "docker rmi $IMAGE_NAME:stable"
       }
     }
+    stage("Create New Pods") {
+      steps {
+        withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: 'minikube', contextName: 'minikube', credentialsId: 'jenkins-k8s-token', namespace: '', serverUrl: 'https://192.168.105.21:8443']]) {
+          script {
+            def pods = groovyMethods.findPodsFromName("${namespace}", "${serviceName}")
+            for (podName in pods) {
+              sh """
+                kubectl delete -n ${namespace} pod ${podName}
+                sleep 10s
+              """
+            }
+          }
+        }
+      }
+    }
   }
-  //   stage("Create New Pods") {
-  //     steps {
-  //       withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: '', contextName: '', credentialsId: '', namespace: '', serverUrl: '']]) {
-  //         script {
-  //           def pods = groovyMethods.findPodsFromName("${namespace}", "${serviceName}")
-  //           for (podName in pods) {
-  //             sh """
-  //               kubectl delete -n ${namespace} pod ${podName}
-  //               sleep 10s
-  //             """
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-  // post {
-  //   success {
-  //     script {
-  //       m2 = System.currentTimeMillis()
-  //       def durTime = groovyMethods.durationTime(m1, m2)
-  //       def author = groovyMethods.readCommitAuthor()
-  //       groovyMethods.notifySlack("", "ecommerce-jenkins", [
-  //       				[
-  //       					title: "BUILD SUCCEEDED: ${service} Service with build number ${env.BUILD_NUMBER}",
-  //       					title_link: "${env.BUILD_URL}",
-  //       					color: "good",
-  //       					text: "Created by: ${author}",
-  //       					"mrkdwn_in": ["fields"],
-  //       					fields: [
-  //       						[
-  //       							title: "Duration Time",
-  //       							value: "${durTime}",
-  //       							short: true
-  //       						],
-  //       						[
-  //       							title: "Stage Name",
-  //       							value: "Production",
-  //       							short: true
-  //       						],
-  //       					]
-  //       				]
-  //       		]
-  //       )
-  //     }
-  //   }
-  //   failure {
-  //     script {
-  //       m2 = System.currentTimeMillis()
-  //       def durTime = groovyMethods.durationTime(m1, m2)
-  //       def author = groovyMethods.readCommitAuthor()
-  //       groovyMethods.notifySlack("", "ecommerce-jenkins", [
-  //       				[
-  //       					title: "BUILD FAILED: ${service} Service with build number ${env.BUILD_NUMBER}",
-  //       					title_link: "${env.BUILD_URL}",
-  //       					color: "error",
-  //       					text: "Created by: ${author}",
-  //       					"mrkdwn_in": ["fields"],
-  //       					fields: [
-  //       						[
-  //       							title: "Duration Time",
-  //       							value: "${durTime}",
-  //       							short: true
-  //       						],
-  //       						[
-  //       							title: "Stage Name",
-  //       							value: "Production",
-  //       							short: true
-  //       						],
-  //       					]
-  //       				]
-  //       		]
-  //       )
-  //     }
-  //   }
-  // }
 }
